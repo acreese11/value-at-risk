@@ -1,0 +1,43 @@
+bundle:
+  name: energy-var-demo
+
+workspace:
+  host: https://adb-4279470166116430.10.azuredatabricks.net/
+
+targets:
+  dev:
+    mode: development
+
+resources:
+  jobs:
+    energy-var-pipeline:
+      name: energy-var-pipeline
+      tasks:
+        - task_key: context
+          notebook_task:
+            notebook_path: ./00_var_context.py
+        - task_key: market_etl
+          depends_on:
+            - task_key: context
+          notebook_task:
+            notebook_path: ./01_var_market_etl.py
+        - task_key: model_train
+          depends_on:
+            - task_key: market_etl
+          notebook_task:
+            notebook_path: ./02_var_model.py
+        - task_key: monte_carlo
+          depends_on:
+            - task_key: model_train
+          notebook_task:
+            notebook_path: ./03_var_monte_carlo.py
+        - task_key: aggregation
+          depends_on:
+            - task_key: monte_carlo
+          notebook_task:
+            notebook_path: ./04_var_aggregation.py
+        - task_key: compliance
+          depends_on:
+            - task_key: aggregation
+          notebook_task:
+            notebook_path: ./05_var_compliance.py
