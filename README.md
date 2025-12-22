@@ -24,4 +24,13 @@ ___
 | PyYAML                                 | Reading Yaml files      | MIT        | https://github.com/yaml/pyyaml                      |
 
 ## Instruction
-To run this accelerator, clone this repo into a Databricks workspace. Switch to the `web-sync` branch if you would like to run the version of notebooks currently published on the Databricks website. Attach the `RUNME` notebook to any cluster running a DBR 11.0 or later runtime, and execute the notebook via Run-All. A multi-step-job describing the accelerator pipeline will be created, and the link will be provided. Execute the multi-step-job to see how the pipeline runs. The job configuration is written in the RUNME notebook in json format. The cost associated with running the accelerator is the user's responsibility.
+
+To run this accelerator, use the Databricks Asset Bundle flow:
+
+- Clone this repo locally and install the Databricks CLI v0.200+  
+- Configure authentication with a profile (for example `areese`) that points at your Azure Databricks workspace  
+- From the repo root, use the Databricks Asset Bundle defined in `databricks.yml`:
+  - `databricks bundle validate -p <profile>`  
+  - `databricks bundle deploy -p <profile>`  
+  - `databricks bundle run energy-var-pipeline -p <profile>`  
+- This creates and runs the `energy-var-pipeline` multi-task job (notebook-based) in your workspace, and can leverage serverless compute where supported
