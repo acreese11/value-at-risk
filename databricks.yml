@@ -1,8 +1,35 @@
 bundle:
   name: energy-var-demo
 
-workspace:
-  host: https://adb-4279470166116430.10.azuredatabricks.net/
+variables:
+  catalog_name:
+    default: areese_demo_catalog
+  schema_name:
+    default: value_at_risk
+  yfinance_start:
+    default: "2023-01-01"
+  yfinance_end:
+    default: "2025-12-31"
+  model_name:
+    default: value_at_risk
+  model_date:
+    default: "2019-09-01"
+  mc_executors:
+    default: "20"
+  mc_volatility_days:
+    default: "90"
+  mc_runs:
+    default: "32000"
+  table_stocks:
+    default: market_data
+  table_indicators:
+    default: market_indicators
+  table_volatility:
+    default: market_volatility
+  table_mc_market:
+    default: monte_carlo_market
+  table_mc_trials:
+    default: monte_carlo_trials
 
 targets:
   dev:
@@ -21,23 +48,92 @@ resources:
             - task_key: context
           notebook_task:
             notebook_path: ./01_var_market_etl.py
+            base_parameters:
+              catalog_name: ${var.catalog_name}
+              schema_name: ${var.schema_name}
+              yfinance_start: ${var.yfinance_start}
+              yfinance_end: ${var.yfinance_end}
+              mc_volatility_days: ${var.mc_volatility_days}
+              table_stocks: ${var.table_stocks}
+              table_indicators: ${var.table_indicators}
+              table_volatility: ${var.table_volatility}
         - task_key: model_train
           depends_on:
             - task_key: market_etl
           notebook_task:
             notebook_path: ./02_var_model.py
+            base_parameters:
+              catalog_name: ${var.catalog_name}
+              schema_name: ${var.schema_name}
+              yfinance_start: ${var.yfinance_start}
+              yfinance_end: ${var.yfinance_end}
+              model_name: ${var.model_name}
+              model_date: ${var.model_date}
+              mc_executors: ${var.mc_executors}
+              mc_volatility_days: ${var.mc_volatility_days}
+              mc_runs: ${var.mc_runs}
+              table_stocks: ${var.table_stocks}
+              table_indicators: ${var.table_indicators}
+              table_volatility: ${var.table_volatility}
+              table_mc_market: ${var.table_mc_market}
+              table_mc_trials: ${var.table_mc_trials}
         - task_key: monte_carlo
           depends_on:
             - task_key: model_train
           notebook_task:
             notebook_path: ./03_var_monte_carlo.py
+            base_parameters:
+              catalog_name: ${var.catalog_name}
+              schema_name: ${var.schema_name}
+              yfinance_start: ${var.yfinance_start}
+              yfinance_end: ${var.yfinance_end}
+              model_name: ${var.model_name}
+              model_date: ${var.model_date}
+              mc_executors: ${var.mc_executors}
+              mc_volatility_days: ${var.mc_volatility_days}
+              mc_runs: ${var.mc_runs}
+              table_stocks: ${var.table_stocks}
+              table_indicators: ${var.table_indicators}
+              table_volatility: ${var.table_volatility}
+              table_mc_market: ${var.table_mc_market}
+              table_mc_trials: ${var.table_mc_trials}
         - task_key: aggregation
           depends_on:
             - task_key: monte_carlo
           notebook_task:
             notebook_path: ./04_var_aggregation.py
+            base_parameters:
+              catalog_name: ${var.catalog_name}
+              schema_name: ${var.schema_name}
+              yfinance_start: ${var.yfinance_start}
+              yfinance_end: ${var.yfinance_end}
+              model_name: ${var.model_name}
+              model_date: ${var.model_date}
+              mc_executors: ${var.mc_executors}
+              mc_volatility_days: ${var.mc_volatility_days}
+              mc_runs: ${var.mc_runs}
+              table_stocks: ${var.table_stocks}
+              table_indicators: ${var.table_indicators}
+              table_volatility: ${var.table_volatility}
+              table_mc_market: ${var.table_mc_market}
+              table_mc_trials: ${var.table_mc_trials}
         - task_key: compliance
           depends_on:
             - task_key: aggregation
           notebook_task:
             notebook_path: ./05_var_compliance.py
+            base_parameters:
+              catalog_name: ${var.catalog_name}
+              schema_name: ${var.schema_name}
+              yfinance_start: ${var.yfinance_start}
+              yfinance_end: ${var.yfinance_end}
+              model_name: ${var.model_name}
+              model_date: ${var.model_date}
+              mc_executors: ${var.mc_executors}
+              mc_volatility_days: ${var.mc_volatility_days}
+              mc_runs: ${var.mc_runs}
+              table_stocks: ${var.table_stocks}
+              table_indicators: ${var.table_indicators}
+              table_volatility: ${var.table_volatility}
+              table_mc_market: ${var.table_mc_market}
+              table_mc_trials: ${var.table_mc_trials}
