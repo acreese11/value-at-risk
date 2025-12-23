@@ -24,6 +24,7 @@ dev = [
   "mlflow",
   "matplotlib",
   "databricks-connect>=15.1",
+  "ipykernel",
 ]
 
 [project.urls]
