@@ -1,9 +1,42 @@
 def download_market_data(tick, min_date, max_date):
+    """
+    Download and preprocess daily OHLCV market data for a single instrument.
+
+    This helper uses `yfinance` to pull historical data for the given ticker,
+    over the date range `[min_date, max_date]`, then:
+      - Reindexes to a complete set of business days.
+      - Forward-fills missing values.
+      - Adds explicit `date` and `ticker` columns.
+      - Renames columns to lower case (`open`, `high`, `low`, `close`, `volume`)
+        for consistency with downstream Spark schemas.
+
+    Parameters
+    ----------
+    tick : str
+        Ticker symbol understood by yfinance (e.g., 'AAPL', 'CL=F').
+    min_date : str or datetime-like
+        Start date (inclusive) for the history window.
+    max_date : str or datetime-like
+        End date (inclusive) for the history window.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame indexed by business day with columns:
+        `date`, `ticker`, `open`, `high`, `low`, `close`, `volume`.
+    """
     import pandas as pd
     import yfinance as yf
+
     msft = yf.Ticker(tick)
     raw = msft.history(start=min_date, end=max_date)[['Open', 'High', 'Low', 'Close', 'Volume']]
-    # fill in missing business days
+
+    # yfinance often returns a timezone-aware DatetimeIndex (e.g., America/New_York).
+    # Strip the timezone so we can safely reindex against a tz-naive business-day index.
+    if hasattr(raw.index, "tz") and raw.index.tz is not None:
+        raw.index = raw.index.tz_localize(None)
+
+    # fill in missing business days over the requested window
     idx = pd.date_range(min_date, max_date, freq='B')
     # use last observation carried forward for missing value
     output_df = raw.reindex(idx, method='pad')

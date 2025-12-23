@@ -1,11 +1,40 @@
 # Databricks notebook source
+
+%pip install .
+dbutils.library.restartPython()
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC # Create portfolio
 # MAGIC In this notebook, we will use `yfinance` to download stock data for 40 equities in an equal weighted hypothetical Latin America portfolio. We show how to use pandas UDFs to better distribute this process efficiently and store all of our output data as a Delta table. 
 
 # COMMAND ----------
 
-# MAGIC %run ./config/configure_notebook
+dbutils.widgets.text("catalog_name", "areese_demo_catalog")
+dbutils.widgets.text("schema_name", "value_at_risk")
+dbutils.widgets.text("yfinance_start", "2023-01-01")
+dbutils.widgets.text("yfinance_end", "2025-12-31")
+dbutils.widgets.text("mc_volatility_days", "90")
+dbutils.widgets.text("table_stocks", "market_data")
+dbutils.widgets.text("table_indicators", "market_indicators")
+dbutils.widgets.text("table_volatility", "market_volatility")
+
+# COMMAND ----------
+
+from utils.env import (
+  ensure_database,
+  configure_mlflow_experiment,
+  load_config_from_widgets,
+  load_portfolio,
+  load_market_indicators,
+)
+
+config = load_config_from_widgets(dbutils)
+ensure_database(config["database"]["catalog"], config["database"]["schema"])
+configure_mlflow_experiment(dbutils)
+portfolio_df = load_portfolio()
+market_indicators = load_market_indicators()
 
 # COMMAND ----------
 
@@ -97,6 +126,7 @@ plot_candlesticks(stock_df)
 # MAGIC We assume that our various assets can be better described by market indicators and various indices, such as the S&P500, crude oil, treasury, or the dow. These indicators will be used later to create input features for our risk models
 
 # COMMAND ----------
+import pandas as pd
 
 # Create a pandas dataframe where each column contain close index
 market_indicators_df = pd.DataFrame()
