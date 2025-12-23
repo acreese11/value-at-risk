@@ -19,7 +19,35 @@ def plot_candlesticks(stock_df):
   
   
 def plot_var(simulations, var):
-  
+  """
+  Plot a histogram of simulated returns and visually highlight the Value at Risk (VaR) level.
+
+  This function takes a collection of simulated portfolio returns (or terminal
+  prices expressed as returns) and a VaR confidence level, then:
+  - Computes the empirical VaR using `get_var`, which returns the percentile
+    corresponding to `var` (e.g., 99 → 1st percentile / 99% VaR).
+  - Fits a normal distribution to the simulations and overlays its PDF on top
+    of the histogram of simulated outcomes.
+  - Shades the left tail of the fitted distribution up to the VaR threshold
+    and draws a vertical dashed line at the VaR value.
+  - Labels the x‑axis as returns, the y‑axis as density, and sets the title to
+    display the VaR level and its numeric value.
+
+  Parameters
+  ----------
+  simulations : array-like of float
+      Simulated portfolio outcomes (typically returns or end-of-horizon values)
+      from which the VaR is estimated.
+  var : float or int
+      VaR confidence level (e.g., 95 or 99). This is passed to `get_var` to
+      determine the cutoff value in the left tail of the distribution.
+
+  Returns
+  -------
+  None
+      Displays a matplotlib figure with the histogram, fitted normal curve,
+      and highlighted VaR region.
+  """
   import pandas as pd
   import numpy as np
   import matplotlib.pyplot as plt
