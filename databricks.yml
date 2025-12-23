@@ -13,7 +13,7 @@ variables:
   model_name:
     default: value_at_risk
   model_date:
-    default: "2019-09-01"
+    default: "2025-12-31"
   mc_executors:
     default: "20"
   mc_volatility_days:

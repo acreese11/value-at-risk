@@ -99,7 +99,7 @@ def load_config_from_widgets(dbutils) -> dict:
     yfinance_start = _get_or_default("yfinance_start", "2023-01-01")
     yfinance_end = _get_or_default("yfinance_end", "2025-12-31")
     model_name = _get_or_default("model_name", "value_at_risk")
-    model_date = _get_or_default("model_date", "2019-09-01")
+    model_date = _get_or_default("model_date", "2025-12-31")
     mc_executors = int(_get_or_default("mc_executors", "20"))
     mc_volatility_days = int(_get_or_default("mc_volatility_days", "90"))
     mc_runs = int(_get_or_default("mc_runs", "32000"))

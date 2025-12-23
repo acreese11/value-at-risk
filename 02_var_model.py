@@ -1,11 +1,37 @@
 # Databricks notebook source
+
+%pip install .
+dbutils.library.restartPython()
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC # Model building
 # MAGIC In this notebook, we retrieve last 2 years worth of market indicator data to train a model that could predict our instrument returns. As our portfolio is made of 40 equities, we want to train 40 predictive models in parallel, collecting all weights into a single coefficient matrix for monte carlo simulations. We show how to have a more discipline approach to model development by leveraging **MLFlow** capabilities.
 
 # COMMAND ----------
 
-# MAGIC %run ./config/configure_notebook
+dbutils.widgets.text("catalog_name", "areese_demo_catalog")
+dbutils.widgets.text("schema_name", "value_at_risk")
+dbutils.widgets.text("model_date", "2025-12-31")
+dbutils.widgets.text("table_stocks", "market_data")
+dbutils.widgets.text("table_volatility", "market_volatility")
+
+# COMMAND ----------
+
+from utils.env import (
+  ensure_database,
+  configure_mlflow_experiment,
+  load_config_from_widgets,
+  load_portfolio,
+  load_market_indicators,
+)
+
+config = load_config_from_widgets(dbutils)
+ensure_database(config["database"]["catalog"], config["database"]["schema"])
+configure_mlflow_experiment(dbutils)
+portfolio_df = load_portfolio()
+market_indicators = load_market_indicators()
 
 # COMMAND ----------
 
@@ -212,11 +238,15 @@ with mlflow.start_run(run_name='value-at-risk') as run:
   )
   
   # log additional artifacts
-  mlflow.log_artifact("{}/factor_correlation.png".format(tempDir.name))
+  mlflow.log_artifact(f"{tempDir.name}/factor_correlation.png")
 
 # COMMAND ----------
 
-model_udf = mlflow.pyfunc.spark_udf(model_uri='runs:/{}/model'.format(run_id), result_type='float', spark=spark)
+model_udf = mlflow.pyfunc.spark_udf(
+  model_uri=f"runs:/{run_id}/model",
+  result_type='float',
+  spark=spark,
+)
 prediction_df = features_df.withColumn('predicted', model_udf(F.struct('ticker', 'features')))
 display(prediction_df)
 
@@ -251,7 +281,7 @@ plt.show()
 
 with mlflow.start_run(run_id=run_id) as run:
   mlflow.log_metric("wsse", wsse)
-  mlflow.log_artifact("{}/model_wsse.png".format(tempDir.name))
+  mlflow.log_artifact(f"{tempDir.name}/model_wsse.png")
 
 # COMMAND ----------
 
@@ -270,9 +300,10 @@ with mlflow.start_run(run_id=run_id) as run:
 
 # COMMAND ----------
 
+uc_model_name = f"{config['database']['catalog']}.{config['database']['schema']}.{config['model']['name']}"
 client = mlflow.tracking.MlflowClient()
-model_uri = "runs:/{}/model".format(run_id)
-result = mlflow.register_model(model_uri, config['model']['name'])
+model_uri = f"runs:/{run_id}/model"
+result = mlflow.register_model(model_uri, uc_model_name)
 version = result.version
 
 # COMMAND ----------
@@ -283,22 +314,10 @@ version = result.version
 # COMMAND ----------
 
 client = mlflow.tracking.MlflowClient()
-for model in client.search_model_versions("name='{}'".format(config['model']['name'])):
-  if model.current_stage == 'Production':
-    print("Archiving model version {}".format(model.version))
-    client.transition_model_version_stage(
-      name=config['model']['name'],
-      version=int(model.version),
-      stage="Archived"
-    )
-
-# COMMAND ----------
-
-client = mlflow.tracking.MlflowClient()
-client.transition_model_version_stage(
-    name=config['model']['name'],
+client.set_registered_model_alias(
+    name=uc_model_name,
+    alias="prod",
     version=version,
-    stage="Production"
 )
 
 # COMMAND ----------
@@ -309,9 +328,9 @@ client.transition_model_version_stage(
 # COMMAND ----------
 
 model_udf = mlflow.pyfunc.spark_udf(
-  model_uri='models:/{}/production'.format(config['model']['name']), 
-  result_type='float', 
-  spark=spark
+  model_uri=f"models:/{uc_model_name}@prod",
+  result_type='float',
+  spark=spark,
 )
 
 # COMMAND ----------
@@ -338,7 +357,3 @@ plt.show()
 # COMMAND ----------
 
 tempDir.cleanup()
-
-# COMMAND ----------
-
-
