@@ -4,7 +4,7 @@ name = "value-at-risk"
 version = "0.1.0"
 description = "Databricks-based value-at-risk demo using Delta Lake, MLflow, and alternative data."
 readme = "README.md"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.10"
 license = { file = "LICENSE.md" }
 authors = [
   { name = "Databricks, Inc." }
